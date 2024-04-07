@@ -68,6 +68,88 @@ static void MX_USART3_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+void get_all_box_status(int box_num, uint8_t* status_arr) {
+	// box_num is actual num - 1
+	// 0 for open, 1 for close
+	box_num += 1;
+	for (int i = 0; i < box_num; i++){
+		uint8_t data = (i << 2) | 2;
+		uint8_t rx_data = -1;
+		int result = -1;
+		while (result == -1) {
+			HAL_UART_Transmit(DOWN, &data, 1, 100);
+			for (int j = 0; j < 3; j++){
+				int s = HAL_UART_Receive(DOWN, &rx_data, 1, 100);
+				if (s == HAL_OK) {
+					uint8_t addr, command;
+					addr = (rx_data >> 2) & 0x3F;
+					command = rx_data & 0x03;
+					if (addr == i) {
+						result = command;
+						break;
+					}
+				}
+			}
+		}
+		status_arr[i] = result;
+	}
+}
+
+uint8_t get_box_status(int box_addr) {
+	// 0 for open, 1 for close
+	uint8_t data = (box_addr << 2) | 2;
+	uint8_t rx_data = -1;
+	int result = -1;
+	while (result == -1) {
+		HAL_UART_Transmit(DOWN, &data, 1, 100);
+		for (int i = 0; i < 3; i++){
+			int s = HAL_UART_Receive(DOWN, &rx_data, 1, 100);
+			if (s == HAL_OK) {
+				uint8_t addr, command;
+				addr = (rx_data >> 2) & 0x3F;
+				command = rx_data & 0x03;
+				if (addr == box_addr) {
+					result = command;
+					break;
+				}
+			}
+		}
+	}
+	return result;
+}
+
+void open_box(int box_addr){
+	HAL_Delay(5); // limit the rate, or it may fail
+	uint8_t msg = box_addr << 2;
+	msg = msg | 1;
+	HAL_UART_Transmit(DOWN, &msg, 1, 1000);
+	HAL_Delay(5);
+}
+
+void close_box(int box_addr){
+	HAL_Delay(5); // limit the rate, or it may fail
+	uint8_t msg = box_addr << 2;
+	HAL_UART_Transmit(DOWN, &msg, 1, 1000);
+	HAL_Delay(5);
+}
+
+void open_all(int box_num) {
+	// box_num is actual num - 1
+	box_num += 1;
+	for (int i = 0; i < box_num; i++){
+		open_box(i);
+	}
+}
+
+void close_all(int box_num) {
+	// box_num is actual num - 1
+	box_num += 1;
+	for (int i = 0; i < box_num; i++){
+		close_box(i);
+	}
+}
+
+
 /* USER CODE END 0 */
 
 /**
@@ -77,7 +159,12 @@ static void MX_USART3_UART_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	int status = STATUS_INIT;
+
+  int status = STATUS_INIT;
+  uint8_t box_status[64];
+  for(int i = 0; i < 64; i++) {
+	box_status[i] = -1;
+  }
   uint8_t data;
   uint8_t device_num; // actual num - 1
   /* USER CODE END 1 */
@@ -109,15 +196,12 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  HAL_GPIO_WritePin(GPIOB ,GPIO_PIN_7, 0); // turn off led first
-  // HAL_UART_Receive(DOWN, &data, 1, 100000000);  // the first is always 0, ignore
-  // no need to do this, it will automatically ignore
-  data = 3;
   while (status != STATUS_CONNECTED) {
+    data = 3;
     HAL_UART_Transmit(DOWN, &data, 1, 1000);
-    HAL_Delay(200);
+    HAL_Delay(20);
     for(int i = 0; i < 3; i++){
-      int s = HAL_UART_Receive(DOWN, &data, 1, 100);
+      int s = HAL_UART_Receive(DOWN, &data, 1, 10);
       if (s == HAL_OK) {
         uint8_t addr, command;
         addr = (data >> 2) & 0x3F;
@@ -131,6 +215,12 @@ int main(void)
     }
   }
   HAL_GPIO_WritePin(GPIOB ,GPIO_PIN_7, 1); // turn on led if connected
+//  get_all_box_status(device_num, box_status);
+//  open_all(device_num);
+//  get_all_box_status(device_num, box_status);
+//  close_all(device_num);
+//  get_all_box_status(device_num, box_status);
+//  HAL_GPIO_WritePin(GPIOB ,GPIO_PIN_7, 0);
   while (1)
   {
     /* USER CODE END WHILE */
@@ -351,6 +441,9 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOG_CLK_ENABLE();
   HAL_PWREx_EnableVddIO2();
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_RESET);
+
   /*Configure GPIO pins : PE2 PE3 */
   GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_3;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -358,6 +451,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.Alternate = GPIO_AF13_SAI1;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PC13 */
+  GPIO_InitStruct.Pin = GPIO_PIN_13;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PF0 PF1 PF2 */
   GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2;
@@ -545,6 +644,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   GPIO_InitStruct.Alternate = GPIO_AF6_SPI3;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PB7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_7;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PB8 PB9 */
