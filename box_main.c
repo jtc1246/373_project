@@ -126,11 +126,6 @@ int main(void)
   HAL_GPIO_WritePin(GPIOB ,GPIO_PIN_7, 1);
   HAL_Delay(1000);
   HAL_GPIO_WritePin(GPIOB ,GPIO_PIN_7, 0);
-  HAL_UART_Receive(UP, &data, 1, 100000000); // the first is always 0, ignore
-  // also safe if it actually don't have this extra package, as the server will retry
-  if (last == 0) {
-    HAL_UART_Receive(DOWN, &data, 1, 100000000);
-  }
   // no pairing process for boxes
   while (1)
   {
@@ -151,7 +146,7 @@ int main(void)
       }
       else if(addr != 0 && last == 0) {
         addr = addr - 1;
-        data = (addr << 2) | status;
+        data = (addr << 2) | command;
         HAL_UART_Transmit(DOWN, &data, 1, 1000);
       }
       else if(addr != 0 && last) {
