@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <sys/unistd.h>
+#include <stdint.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -33,7 +34,11 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define BOX_CLOSED 0
+#define BOX_OPEN 1
+#define DOWN &huart3
+#define STATUS_INIT 0
+#define STATUS_CONNECTED 1
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -62,20 +67,7 @@ static void MX_USART3_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-int _write(int file, char *data, int len) {
-    // 仅当作为stdout或stderr输出时重定向
-    if ((file != STDOUT_FILENO) && (file != STDERR_FILENO)) {
-        errno = EBADF;
-        return -1;
-    }
 
-    // 实际发送数据
-    if (HAL_UART_Transmit(&huart1, (uint8_t*)data, len, 1000) == HAL_OK) {
-        return len;
-    } else {
-        return 0;
-    }
-}
 /* USER CODE END 0 */
 
 /**
@@ -85,16 +77,9 @@ int _write(int file, char *data, int len) {
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	int status = 0;
-	int status2 = 0;
-	uint8_t rx_result = -1;
-	int status3 = 0;
-	int status4 =0;
-	uint8_t tx_buff[]={234,74,3,76,26,78,94,156,45,221};
-	uint8_t rx_buff[10];
-		for (int i=0; i<10;i++){
-			rx_buff[i]=0;
-		}
+	int status = STATUS_INIT;
+  uint8_t data;
+  uint8_t device_num; // actual num - 1
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -124,30 +109,34 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  int a=-1;
-  int b=-1;
-  int c=-1;
-  HAL_UART_Transmit(&huart3, tx_buff, 10, 10);
+  HAL_GPIO_WritePin(GPIOB ,GPIO_PIN_7, 0); // turn off led first
+  // HAL_UART_Receive(DOWN, &data, 1, 100000000);  // the first is always 0, ignore
+  // no need to do this, it will automatically ignore
+  data = 3;
+  while (status != STATUS_CONNECTED) {
+    HAL_UART_Transmit(DOWN, &data, 1, 1000);
+    HAL_Delay(200);
+    for(int i = 0; i < 3; i++){
+      int s = HAL_UART_Receive(DOWN, &data, 1, 100);
+      if (s == HAL_OK) {
+        uint8_t addr, command;
+        addr = (data >> 2) & 0x3F;
+        command = data & 0x03;
+        if (command == 3) {
+          device_num = addr;
+          status = STATUS_CONNECTED;
+          break;
+        }
+      }
+    }
+  }
+  HAL_GPIO_WritePin(GPIOB ,GPIO_PIN_7, 1); // turn on led if connected
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  a=12;
-	  uint8_t x1=123;
-	  printf("test1");
-//	  HAL_UART_Transmit(&huart1, tx_buff, 10, 1000);
-//	  if(HAL_UART_Transmit(&huart3, tx_buff, 10, 10)==HAL_OK){
-//		  status += 1;
-//	  }else{
-//		  status2 += 1;
-//	  }
-//	  if(HAL_UART_Receive(&huart3, &rx_buff, 10, 10)==HAL_OK){
-//		  status3+=1;
-//	  }else{
-//		  status4+=1;
-//	  }
-//	  HAL_Delay(100);
+
   }
   /* USER CODE END 3 */
 }
