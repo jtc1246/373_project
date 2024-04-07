@@ -107,6 +107,25 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   HAL_GPIO_WritePin(GPIOB ,GPIO_PIN_7, 0); // turn off led first
+  int button_pressed_cnt = 0;
+  // to indicate whether it is the last one
+  // short push the button if is not, long push if it is
+  while(HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == 0){
+	HAL_Delay(50);
+  }
+  while(HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == 1){
+	HAL_Delay(50);
+	button_pressed_cnt++;
+	if(button_pressed_cnt == 10) {
+	  break;
+	}
+  }
+  if(button_pressed_cnt >= 10){
+	last = 1;
+  }
+  HAL_GPIO_WritePin(GPIOB ,GPIO_PIN_7, 1);
+  HAL_Delay(1000);
+  HAL_GPIO_WritePin(GPIOB ,GPIO_PIN_7, 0);
   HAL_UART_Receive(UP, &data, 1, 100000000); // the first is always 0, ignore
   // also safe if it actually don't have this extra package, as the server will retry
   if (last == 0) {
