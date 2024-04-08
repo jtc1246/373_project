@@ -227,41 +227,54 @@ int main(void)
   HAL_GPIO_WritePin(GPIOB ,GPIO_PIN_7, 1); // turn on led if connected
 
   // Some tests
-  get_all_box_status(device_num, box_status);
-  HAL_Delay(2000);
-  close_all(device_num);
-  get_all_box_status(device_num, box_status);
-  HAL_Delay(2000);
-  open_box(1);
-  get_all_box_status(device_num, box_status);
-  HAL_Delay(2000);
-  open_box(2);
-  get_all_box_status(device_num, box_status);
-  HAL_Delay(2000);
-  close_box(1);
-  get_all_box_status(device_num, box_status);
-  HAL_Delay(2000);
+//  get_all_box_status(device_num, box_status);
+//  HAL_Delay(2000);
+//  close_all(device_num);
+//  get_all_box_status(device_num, box_status);
+//  HAL_Delay(2000);
+//  open_box(1);
+//  get_all_box_status(device_num, box_status);
+//  HAL_Delay(2000);
+//  open_box(2);
+//  get_all_box_status(device_num, box_status);
+//  HAL_Delay(2000);
+//  close_box(1);
+//  get_all_box_status(device_num, box_status);
+//  HAL_Delay(2000);
+//  open_box(0);
+//  get_all_box_status(device_num, box_status);
+//  HAL_Delay(2000);
+//  close_box(0);
+//  get_all_box_status(device_num, box_status);
+//  HAL_Delay(2000);
+//  open_box(1);
+//  get_all_box_status(device_num, box_status);
+//  HAL_Delay(2000);
+//  close_box(2);
+//  get_all_box_status(device_num, box_status);
+//  HAL_Delay(2000);
+//  close_box(1);
+//  get_all_box_status(device_num, box_status);
+//  HAL_Delay(2000);
+//  open_all(device_num);
+//  get_all_box_status(device_num, box_status);
+//  HAL_Delay(2000);
+//  close_all(device_num);
+//  get_all_box_status(device_num, box_status);
+//  HAL_Delay(2000);
+
   open_box(0);
-  get_all_box_status(device_num, box_status);
-  HAL_Delay(2000);
+  HAL_Delay(1000);
   close_box(0);
-  get_all_box_status(device_num, box_status);
-  HAL_Delay(2000);
-  open_box(1);
-  get_all_box_status(device_num, box_status);
-  HAL_Delay(2000);
-  close_box(2);
-  get_all_box_status(device_num, box_status);
-  HAL_Delay(2000);
-  close_box(1);
-  get_all_box_status(device_num, box_status);
-  HAL_Delay(2000);
-  open_all(device_num);
-  get_all_box_status(device_num, box_status);
-  HAL_Delay(2000);
-  close_all(device_num);
-  get_all_box_status(device_num, box_status);
-  HAL_Delay(2000);
+  HAL_Delay(1000);
+  open_box(0);
+  HAL_Delay(1000);
+  close_box(0);
+  HAL_Delay(1000);
+  open_box(0);
+  HAL_Delay(1000);
+  close_box(0);
+  HAL_Delay(1000);
 
   while (1)
   {
