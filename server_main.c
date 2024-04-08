@@ -226,12 +226,43 @@ int main(void)
   status = STATUS_INIT;
   HAL_GPIO_WritePin(GPIOB ,GPIO_PIN_7, 1); // turn on led if connected
 
-//  get_all_box_status(device_num, box_status);
-//  open_all(device_num);
-//  get_all_box_status(device_num, box_status);
-//  close_all(device_num);
-//  get_all_box_status(device_num, box_status);
-//  HAL_GPIO_WritePin(GPIOB ,GPIO_PIN_7, 0);
+  // Some tests
+  get_all_box_status(device_num, box_status);
+  HAL_Delay(2000);
+  close_all(device_num);
+  get_all_box_status(device_num, box_status);
+  HAL_Delay(2000);
+  open_box(1);
+  get_all_box_status(device_num, box_status);
+  HAL_Delay(2000);
+  open_box(2);
+  get_all_box_status(device_num, box_status);
+  HAL_Delay(2000);
+  close_box(1);
+  get_all_box_status(device_num, box_status);
+  HAL_Delay(2000);
+  open_box(0);
+  get_all_box_status(device_num, box_status);
+  HAL_Delay(2000);
+  close_box(0);
+  get_all_box_status(device_num, box_status);
+  HAL_Delay(2000);
+  open_box(1);
+  get_all_box_status(device_num, box_status);
+  HAL_Delay(2000);
+  close_box(2);
+  get_all_box_status(device_num, box_status);
+  HAL_Delay(2000);
+  close_box(1);
+  get_all_box_status(device_num, box_status);
+  HAL_Delay(2000);
+  open_all(device_num);
+  get_all_box_status(device_num, box_status);
+  HAL_Delay(2000);
+  close_all(device_num);
+  get_all_box_status(device_num, box_status);
+  HAL_Delay(2000);
+
   while (1)
   {
     /* USER CODE END WHILE */
