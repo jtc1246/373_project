@@ -149,6 +149,31 @@ void close_all(int box_num) {
 	}
 }
 
+uint8_t pair() {
+	int status = STATUS_INIT;
+	uint8_t device_num;
+	uint8_t data;
+	while (status != STATUS_CONNECTED) {
+		data = 3;
+		HAL_UART_Transmit(DOWN, &data, 1, 1000);
+		HAL_Delay(20);
+		for(int i = 0; i < 3; i++){
+		  int s = HAL_UART_Receive(DOWN, &data, 1, 10);
+		  if (s == HAL_OK) {
+			uint8_t addr, command;
+			addr = (data >> 2) & 0x3F;
+			command = data & 0x03;
+			if (command == 3) {
+			  device_num = addr;
+			  status = STATUS_CONNECTED;
+			  break;
+			}
+		  }
+		}
+	  }
+	return device_num;
+}
+
 
 /* USER CODE END 0 */
 
@@ -196,25 +221,11 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (status != STATUS_CONNECTED) {
-    data = 3;
-    HAL_UART_Transmit(DOWN, &data, 1, 1000);
-    HAL_Delay(20);
-    for(int i = 0; i < 3; i++){
-      int s = HAL_UART_Receive(DOWN, &data, 1, 10);
-      if (s == HAL_OK) {
-        uint8_t addr, command;
-        addr = (data >> 2) & 0x3F;
-        command = data & 0x03;
-        if (command == 3) {
-          device_num = addr;
-          status = STATUS_CONNECTED;
-          break;
-        }
-      }
-    }
-  }
+  HAL_GPIO_WritePin(GPIOB ,GPIO_PIN_7, 0);
+  device_num = pair();
+  status = STATUS_INIT;
   HAL_GPIO_WritePin(GPIOB ,GPIO_PIN_7, 1); // turn on led if connected
+
 //  get_all_box_status(device_num, box_status);
 //  open_all(device_num);
 //  get_all_box_status(device_num, box_status);
