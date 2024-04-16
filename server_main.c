@@ -154,23 +154,62 @@ uint8_t pair() {
 	uint8_t device_num;
 	uint8_t data;
 	while (status != STATUS_CONNECTED) {
+		uint8_t connected[64];
+		for(int i=0; i<63;i++){
+			connected[i]=0;
+		}
+		uint32_t time_ms = HAL_GetTick();
 		data = 3;
 		HAL_UART_Transmit(DOWN, &data, 1, 1000);
-		HAL_Delay(20);
-		for(int i = 0; i < 3; i++){
-		  int s = HAL_UART_Receive(DOWN, &data, 1, 10);
-		  if (s == HAL_OK) {
-			uint8_t addr, command;
-			addr = (data >> 2) & 0x3F;
-			command = data & 0x03;
-			if (command == 3) {
-			  device_num = addr;
-			  status = STATUS_CONNECTED;
-			  break;
+		while(HAL_GetTick()-time_ms <= 2000) {
+			int s = HAL_UART_Receive(DOWN, &data, 1, 10);
+			if (s == HAL_OK) {
+				uint8_t addr, command;
+				addr = (data >> 2) & 0x3F;
+				command = data & 0x03;
+				if(command == 3 && addr < 64){
+					connected[addr] = 1;
+				}
 			}
-		  }
 		}
-	  }
+		uint8_t success = 1;
+		if(connected[0] == 0){
+			success = 0;
+			continue;
+		}
+		int a = 0;
+		for(a = 0;a<64;a++){
+			if(connected[a]==0){
+				break;
+			}
+		}
+		for(int tmp=a;tmp<64;tmp++){
+			if(connected[tmp]==1){
+				success = 0;
+				break;
+			}
+		}
+		if(success == 0){
+			continue;
+		}
+		device_num = a-1;
+		status = STATUS_CONNECTED;
+		break;
+//		HAL_Delay(20);
+//		for(int i = 0; i < 3; i++){
+//		  int s = HAL_UART_Receive(DOWN, &data, 1, 10);
+//		  if (s == HAL_OK) {
+//			uint8_t addr, command;
+//			addr = (data >> 2) & 0x3F;
+//			command = data & 0x03;
+//			if (command == 3) {
+//			  device_num = addr;
+//			  status = STATUS_CONNECTED;
+//			  break;
+//			}
+//		  }
+//		}
+	}
 	return device_num;
 }
 
@@ -263,18 +302,21 @@ int main(void)
 //  get_all_box_status(device_num, box_status);
 //  HAL_Delay(2000);
 
+  uint32_t time_ms = HAL_GetTick();
+
   open_box(0);
   HAL_Delay(1000);
   close_box(0);
   HAL_Delay(1000);
+  open_box(1);
+  HAL_Delay(1000);
+  close_box(1);
+  HAL_Delay(1000);
   open_box(0);
   HAL_Delay(1000);
   close_box(0);
   HAL_Delay(1000);
-  open_box(0);
-  HAL_Delay(1000);
-  close_box(0);
-  HAL_Delay(1000);
+  uint32_t time_ms_2 = HAL_GetTick();
 
   while (1)
   {
