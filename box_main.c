@@ -35,7 +35,7 @@
 #define STATUS_OPEN 1
 #define DOWN &huart3
 #define UP &huart2
-#define TIMEOUT_PER_BOX 20 // ms
+#define TIMEOUT_PER_BOX 80 // ms
 #define TIM4_ADDR 0x40000800
 #define TIM1_ADDR 0x40012C00
 #define TIM_CCR2_OFFSET 0x38
