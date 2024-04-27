@@ -35,6 +35,7 @@
 #define STATUS_OPEN 1
 #define DOWN &huart3
 #define UP &huart2
+#define TIMEOUT_PER_BOX 20 // ms
 #define TIM4_ADDR 0x40000800
 #define TIM1_ADDR 0x40012C00
 #define TIM_CCR2_OFFSET 0x38
@@ -86,7 +87,6 @@ int main(void)
   /* USER CODE BEGIN 1 */
   uint8_t status = STATUS_CLOSED;
   uint8_t data = 0;
-//  uint8_t last = 0; // 0 false, 1 true
   uint32_t* tim4_ccr3 = (uint32_t*)(TIM4_ADDR + TIM_CCR3_OFFSET);
   uint32_t* tim4_ccr2 = (uint32_t*)(TIM4_ADDR + TIM_CCR2_OFFSET);
 //  uint32_t* tim1_ccr4 = (uint32_t*)(TIM1_ADDR + TIM_CCR4_OFFSET);
@@ -129,25 +129,7 @@ int main(void)
   HAL_GPIO_WritePin(GPIOB ,GPIO_PIN_7, 0); // turn off led first
   *tim4_ccr2 &= ~CCR_MASK;
   *tim4_ccr2 |= 75; // close
-//  int button_pressed_cnt = 0;
-  // to indicate whether it is the last one
-  // short push the button if is not, long push if it is
-//  while(HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == 0){
-//	HAL_Delay(50);
-//  }
-//  while(HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == 1){
-//	HAL_Delay(50);
-//	button_pressed_cnt++;
-//	if(button_pressed_cnt == 10) {
-//	  break;
-//	}
-//  }
-//  if(button_pressed_cnt >= 10){
-//	last = 1;
-//  }
-  HAL_GPIO_WritePin(GPIOB ,GPIO_PIN_7, 1);
-  HAL_Delay(1000);
-  HAL_GPIO_WritePin(GPIOB ,GPIO_PIN_7, 0);
+
   // no pairing process for boxes
   while (1)
   {
@@ -165,23 +147,30 @@ int main(void)
     if(s == HAL_OK) {
       uint8_t addr = (data >> 2) & 0x3F;
       uint8_t command = data & 0x03;
-      if(addr == 0 && command == 3) { // ping stream
-        data = 3;
-        HAL_UART_Transmit(UP, &data, 1, 1000);
-        HAL_UART_Transmit(DOWN, &data, 1, 1000);
+      if(command == 3) { // ping stream
+        if(addr == 0){
+          data = 3;
+          HAL_UART_Transmit(UP, &data, 1, 1000);
+        }else{
+          addr = addr - 1;
+          data = (addr << 2) | command;
+          HAL_UART_Transmit(DOWN, &data, 1, 1000);
+          int s2 = HAL_UART_Receive(DOWN, &data, 1, (addr + 1) * TIMEOUT_PER_BOX);
+          uint8_t new_command = 3;
+          uint8_t new_addr  = 0;
+          if(s2 == HAL_OK) {
+            new_addr = (data >> 2) & 0x3F;
+            new_addr = new_addr + 1;
+          }
+          data = (new_addr << 2) | new_command;
+          HAL_UART_Transmit(UP, &data, 1, 1000);
+        }
       }
-//      else if(addr == 0 && command == 3 && last) { // ping stream
-//        data = 3;
-//        HAL_UART_Transmit(UP, &data, 1, 1000);
-//      }
       else if(addr != 0) {
         addr = addr - 1;
         data = (addr << 2) | command;
         HAL_UART_Transmit(DOWN, &data, 1, 1000);
       }
-//      else if(addr != 0 && last) {
-//        // do nothing
-//      }
       else if(command == 0) { // close
         if(status != STATUS_CLOSED){
           status = STATUS_CLOSED;
@@ -203,9 +192,6 @@ int main(void)
         HAL_UART_Transmit(UP, &data, 1, 1000);
       }
     }
-//    if(last) {
-//      continue;
-//    }
     s = HAL_UART_Receive(DOWN, &data, 1, 1);
     if (s == HAL_OK) {
       uint8_t addr = (data >> 2) & 0x3F;
